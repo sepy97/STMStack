@@ -37,7 +37,13 @@ public:
 		if (pv != NULL)	delete pv;
 		return temp;
 	}
-	//bool isEmpty();
+	
+	bool isEmpty()
+	{
+		return (this->head == NULL);
+		
+	}
+	
 	void display();
 
 private:

@@ -1,7 +1,10 @@
 #include <iostream>
 #include <thread>
+#include <x86intrin.h>
 
+#define INIT_PUSH 10000
 #define MAX_THREAD_NUM 10
+#define MAX_VOLUME 10000000
 
 class STMStack {
 public:
@@ -55,31 +58,59 @@ private:
 	Node *head;
 };
 
-void testPush (STMStack* toTest, int data)
+void testPush (STMStack* toTest, int volume)
 {
-	toTest->push (data);
+	for (int i = 0; i < volume; i++)
+	{
+		int pushOrPop = rand()%2;
+		if (pushOrPop)
+		{
+			toTest->push (rand()%volume);
+		}
+		else
+		{
+			toTest->pop ();
+		}
+	}
 }
 
-int main ()
+int main (int argc, char** argv)
 {
 	STMStack testStack;
 	
-	std::thread thr[MAX_THREAD_NUM];
+	srand (time (NULL));
 	
-	for (int i = 0; i < MAX_THREAD_NUM; i++)
+	int maxThreads = 0;
+	
+	if (argc > 1)
 	{
-		thr[i] = std::thread (testPush, &testStack, i);
+		maxThreads = atoi(argv[1]);
+	}
+	else
+	{
+		printf ("no arguments :( \n");
+		return 0;
 	}
 	
-	for (int i = 0; i < MAX_THREAD_NUM; i++)
+	std::thread thr[maxThreads];
+	
+	for (int i = 0; i < INIT_PUSH; i++)
+	{
+		testStack.push (rand() % INIT_PUSH);
+	}
+	uint64_t tick = __rdtsc ()/100000;
+	
+	for (int i = 0; i < maxThreads; i++)
+	{
+		thr[i] = std::thread (testPush, &testStack, MAX_VOLUME/maxThreads);
+	}
+	
+	for (int i = 0; i < maxThreads; i++)
 	{
 		thr[i].join ();
 	}
 	
-	for (int i = 0; i < MAX_THREAD_NUM; i++)
-	{
-		printf ("%d\n", testStack.pop());
-	}
-
+	uint64_t tick2 = __rdtsc ()/100000;
+	printf ("%llu\n", tick2 - tick);
 	
 }
